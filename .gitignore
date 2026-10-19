@@ -1,5 +1,5 @@
 *.duckdb
 __pycache__/
 .venv/
-data/raw/*.csv
+modules/01-pipeline-sql/data/raw/*.csv
 .idea/
