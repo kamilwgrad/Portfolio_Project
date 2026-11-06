@@ -7,13 +7,33 @@ import duckdb
 ROOT = Path(__file__).parent
 DB = ROOT / "warehouse.duckdb"
 # Kolejność ma znaczenie: marts zależą od staging. dbt wylicza to sam z ref().
-MODELS = ["staging/stg_invoices"]  # TODO (zadanie): dodaj pozostałe modele w dobrej kolejności
+MODELS = ["staging/stg_invoices", "staging/stg_products", "staging/stg_customers",
+          # TODO (zadanie): dodaj pozostałe modele w dobrej kolejności
+          "marts/dim_customer", "marts/dim_product", "marts/fct_sales"]
 
 TESTS = {
     # TODO (zadanie): brak NULL w kluczach, unikalność klucza wymiaru, reconciliation sum staging vs fact
     "stg_invoices: brak zduplikowanych linii":
         "select count(*) from (select invoice_id from stg_invoices group by 1 having count(*) > 1)",
+    "dim_customer: unikalny customer_id":
+        "select count(*) from (select customer_id from dim_customer group by 1 having count(*) > 1)",
+    "dim_product: unikalny product_id":
+        "select count(*) from (select product_id from dim_product group by 1 having count(*) > 1)",
+
+    "fct_sales: brak null w kluczach":
+        "SELECT count(*) FROM fct_sales "
+        "where invoice_id IS Null or customer_id IS Null or product_id IS Null",
+    "dim_customer: brak null w kluczach":
+        "SELECT count(*) FROM dim_customer where customer_id IS Null",
+    "dim_product: brak null w kluczach":
+        "SELECT count(*) FROM dim_product where product_id IS Null",
+
+    # 1 = sumy się różnią (FAIL), 0 = zgodne; "is distinct from" łapie też NULL po jednej stronie
+    "reconciliation: suma net_amount stg_invoices = fct_sales":
+        "select count(*) from (select (select sum(net_amount) from stg_invoices) as stg_sum, "
+        "(select sum(net_amount) from fct_sales) as fct_sum) where stg_sum is distinct from fct_sum",
 }
+
 
 def main() -> int:
     con = duckdb.connect(str(DB))
@@ -24,13 +44,15 @@ def main() -> int:
     for model in MODELS:
         sql = (ROOT / "models" / f"{model}.sql").read_text()
         con.execute(f"create or replace table {Path(model).name} as {sql}")
-        print(f"built {model}: {con.execute(f'select count(*) from {Path(model).name}').fetchone()[0]} rows")
+        print(
+            f"built {model}: {con.execute(f'select count(*) from {Path(model).name}').fetchone()[0]} rows")
     failed = 0
     for name, sql in TESTS.items():
         bad = con.execute(sql).fetchone()[0]
         print(f"[{'FAIL' if bad else 'PASS'}] {name}")
         failed += bool(bad)
     return 1 if failed else 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

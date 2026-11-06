@@ -1,0 +1,18 @@
+{
+    "workbench.editorAssociations": {
+        "*.copilotmd": "vscode.markdown.preview.editor",
+        "*.parquet": "duckdb.dataFileViewer",
+        "*.csv": "duckdb.dataFileViewer",
+        "*.tsv": "duckdb.dataFileViewer",
+        "*.xlsx": "duckdb.dataFileViewer"
+    },
+    "duckdb.databases": [
+        {
+            "alias": "warehouse",
+            "type": "file",
+            "path": "c:\\Users\\gradk\\Documents\\Portfolio_Project\\modules\\01-pipeline-sql\\warehouse.duckdb",
+            "attached": true
+        }
+    ],
+    "duckdb.defaultDatabase": "warehouse"
+}

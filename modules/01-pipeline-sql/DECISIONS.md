@@ -16,3 +16,4 @@ Plik products.csv:
 3) Format ceny - albo jako string, lub brakuje.
 4) Category czasami po polsku czasami po angielsku
 
+
